@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { LiveAudioVisualizer } from 'react-audio-visualize';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { transferSolTx } from '../lib/solana/transferSol';
 import {
   MessageCard,
@@ -11,8 +11,6 @@ import {
   NFTCollectionCard,
   TrendingNFTCard,
   RugCheckCard,
-  MarketDataCard,
-  CoinInfo,
   MarketDataCard,
   CoinInfo,
 } from '../types/messageCard';
@@ -40,12 +38,9 @@ import { Loader } from 'react-feather';
 import { getPublicKeyFromSolDomain } from '../lib/solana/sns';
 import { swapLST } from '../lib/solana/swapLst';
 import { fetchLSTAddress } from '../lib/utils/lst_reader';
-import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { transferSplTx } from '../lib/solana/transferSpl';
-import { assert } from 'console';
 import { getRugCheck } from '../lib/solana/rugCheck';
 import { getMarketData } from '../lib/utils/marketMacro';
-
 //todo voice speed and clarity customs
 
 const Conversation = () => {
@@ -75,12 +70,10 @@ const Conversation = () => {
   }, [dataChannel]);
 
   const { appWallet, theme } = useAppState();
-  
 
   const rpc = process.env.SOLANA_RPC;
 
-  const marketMacro = async () => { 
-
+  const marketMacro = async () => {
     setMessageList((prev) => [
       ...(prev || []),
       {
@@ -90,23 +83,23 @@ const Conversation = () => {
     ]);
 
     let marketData = await getMarketData();
-    
-    let market:string = marketData["market"];
-    console.log(market)
-    let voice = marketData["voice"];
+
+    let market: string = marketData['market'];
+    console.log(market);
+    let voice = marketData['voice'];
     let stats = marketData['stats'];
-    let priceInfo:any[] = marketData['priceInfo'];
+    let priceInfo: any[] = marketData['priceInfo'];
     let btcDominance = stats['btcDominance'];
     let ethDominance = stats['ethDominance'];
 
-    let coin_info:CoinInfo[] = []
+    let coin_info: CoinInfo[] = [];
     let count = 0;
-    priceInfo.forEach(item => { 
-      if (count <= 0) { 
+    priceInfo.forEach((item) => {
+      if (count <= 0) {
         let coin_symbol = item['symbol'];
         let coin_price = item['price'];
         let coin_change = item['change'];
-        let coin_sparkline = item["sparkLine"]
+        let coin_sparkline = item['sparkLine'];
         coin_info.push({
           symbol: coin_symbol,
           price: Number(Number(coin_price).toFixed(2)),
@@ -115,35 +108,34 @@ const Conversation = () => {
         });
         count += 1;
       }
-      if (item["symbol"] == "BTC") {
+      if (item['symbol'] == 'BTC') {
         coin_info.push({
           symbol: item['symbol'],
           price: Number(Number(item['price']).toFixed(2)),
           change: Number(Number(item['change']).toFixed(2)),
           sparkLine: item['sparkLine'],
-        })
-       }
-    })
-    
+        });
+      }
+    });
+
     const marketInfo: string[] = market
-    .trim()
-    .split('\n')
-    .map(line => line.replace(/^-\s*/, '')); 
-    
-    console.log(marketInfo)
-    let marketDataCard:MarketDataCard = {
+      .trim()
+      .split('\n')
+      .map((line) => line.replace(/^-\s*/, ''));
+
+    console.log(marketInfo);
+    let marketDataCard: MarketDataCard = {
       marketAnalysis: marketInfo,
       coinInfo: coin_info,
-    }
+    };
 
-    
     //todo create a ui for displaying the data
 
     setMessageList((prev) => [
       ...(prev || []),
       {
         type: 'marketDataCard',
-        card:marketDataCard
+        card: marketDataCard,
       },
     ]);
 
@@ -163,12 +155,10 @@ const Conversation = () => {
       },
     ]);
 
-
     return responseToOpenai(
-      `tell the user the contents of ${voice}, use current affairs on your own, to give report,  and ask them what they want to do`
-    )    
-
-  }
+      `tell the user the contents of ${voice}, use current affairs on your own, to give report,  and ask them what they want to do`,
+    );
+  };
   const transferSol = async (amount: number, to: string) => {
     if (!appWallet) return null;
     if (!rpc)
@@ -780,7 +770,7 @@ const Conversation = () => {
     }
   };
 
-  const handleTokenData = async (tokenMint: string) => {
+  const handleTokenData = async (isBase58: boolean, tokenInput: string) => {
     setMessageList((prev) => [
       ...(prev || []),
       {
@@ -788,117 +778,112 @@ const Conversation = () => {
         message: `Fetching token data`,
       },
     ]);
-    try {
-      const data = await getTokenData(tokenMint);
-      if (!data) {
+
+    if (isBase58) {
+      console.log(tokenInput)
+      try {
+        const data = await getTokenData(tokenInput);
+        if (!data) {
+          setMessageList((prev) => [
+            ...(prev || []),
+            {
+              type: 'message',
+              message: 'Oops! there has been a problem in fetching token data',
+            },
+          ]);
+          return responseToOpenai(
+            'tell the user that there has been a problem with fetching token data and ask them to try later.',
+          );
+        }
+
+        let token_card: TokenCard[] = [
+          {
+            address: tokenInput,
+            image: data.image,
+            metadata: data.metadata,
+            price: data.price.toString(),
+            marketCap: data.marketcap.toString(),
+          },
+        ];
+
+        setMessageList((prev) => [
+          ...(prev || []),
+          {
+            type: 'tokenCards',
+            card: token_card,
+          },
+        ]);
+        return responseToOpenai('Ask if the user needed anything else.');
+      } catch (error) {
         setMessageList((prev) => [
           ...(prev || []),
           {
             type: 'message',
-            message: 'Oops! there has been a problem in fetching token data',
+            message: 'Oops! Encountered a problem while fetching token data.',
           },
         ]);
         return responseToOpenai(
           'tell the user that there has been a problem with fetching token data and ask them to try later.',
         );
       }
-
-      let token_card: TokenCard[] = [
-        {
-          address: tokenMint,
-          image: data.image,
-          metadata: data.metadata,
-          price: data.price.toString(),
-          marketCap: data.marketcap.toString(),
-        },
-      ];
-
-      setMessageList((prev) => [
-        ...(prev || []),
-        {
-          type: 'tokenCards',
-          card: token_card,
-        },
-      ]);
-      return responseToOpenai('Ask if the user needed anything else.');
-    } catch (error) {
-      setMessageList((prev) => [
-        ...(prev || []),
-        {
-          type: 'message',
-          message: 'Oops! Encountered a problem while fetching token data.',
-        },
-      ]);
-      return responseToOpenai(
-        'tell the user that there has been a problem with fetching token data and ask them to try later.',
-      );
-    }
-  };
-
-  const handleTokenDataSymbol = async (tokenSymbol: string) => {
-    if (fetchedToken == tokenSymbol) {
-      return responseToOpenai(
-        'I have already fetch the data. tell them to input the address of the token.Ask if the user needed anything else.',
-      );
     } else {
-      setFetchedToken(tokenSymbol);
-    }
-    setMessageList((prev) => [
-      ...(prev || []),
-      {
-        type: 'agent',
-        message: `Fetching ${tokenSymbol} data`,
-      },
-    ]);
-    try {
-      const data = await getTokenDataSymbol(tokenSymbol);
-      console.log(data);
-      if (!data) {
+      if (fetchedToken == tokenInput) {
+        return responseToOpenai(
+          'I have already fetch the data. tell them to input the address of the token.Ask if the user needed anything else.',
+        );
+      } else {
+        setFetchedToken(tokenInput);
+      }
+      try {
+        const data = await getTokenDataSymbol(tokenInput);
+        console.log(data);
+        if (!data) {
+          setMessageList((prev) => [
+            ...(prev || []),
+            {
+              type: 'message',
+              message: 'Oops! there has been a problem in fetching token data',
+            },
+          ]);
+          return responseToOpenai(
+            'tell the user that there has been a problem with fetching token data and ask them to try later.',
+          );
+        }
+
+        let token_card: TokenCard[] = [
+          {
+            address: data.metadata.description,
+            image: data.image,
+            metadata: data.metadata,
+            price: data.price.toString(),
+            marketCap: data.marketcap.toString(),
+            volume: data.volume.toString(),
+            priceChange: data.price_change_24h.toString(),
+          },
+        ];
+
+        setMessageList((prev) => [
+          ...(prev || []),
+          {
+            type: 'tokenCards',
+            card: token_card,
+          },
+        ]);
+        return responseToOpenai(
+          'tell the user that the token data is fetched successfully',
+        );
+      } catch (error) {
         setMessageList((prev) => [
           ...(prev || []),
           {
             type: 'message',
-            message: 'Oops! there has been a problem in fetching token data',
+            message: 'Oops! Encountered a problem while fetching token data.',
           },
         ]);
         return responseToOpenai(
-          'tell the user that there has been a problem with fetching token data and ask them to try later.',
+          'tell the user that there has been a problem with fetching token data and ask them to try later',
         );
       }
-
-      let token_card: TokenCard[] = [
-        {
-          address: data.metadata.description,
-          image: data.image,
-          metadata: data.metadata,
-          price: data.price.toString(),
-          marketCap: data.marketcap.toString(),
-          volume: data.volume.toString(),
-          priceChange: data.price_change_24h.toString(),
-        },
-      ];
-
-      setMessageList((prev) => [
-        ...(prev || []),
-        {
-          type: 'tokenCards',
-          card: token_card,
-        },
-      ]);
-      return responseToOpenai(
-        'tell the user that the token data is fetched successfully',
-      );
-    } catch (error) {
-      setMessageList((prev) => [
-        ...(prev || []),
-        {
-          type: 'message',
-          message: 'Oops! Encountered a problem while fetching token data.',
-        },
-      ]);
-      return responseToOpenai(
-        'tell the user that there has been a problem with fetching token data and ask them to try later',
-      );
     }
   };
 
@@ -951,7 +936,7 @@ const Conversation = () => {
     }
   };
 
-  const handleRugCheck= async (token:string) => {
+  const handleRugCheck = async (token: string) => {
     setMessageList((prev) => [
       ...(prev || []),
       {
@@ -960,22 +945,22 @@ const Conversation = () => {
       },
     ]);
     try {
-      let final_token = ""
-      if (token.startsWith("$")) {
-        final_token = token
+      let final_token = '';
+      if (token.startsWith('$')) {
+        final_token = token;
+      } else {
+        final_token = `$${token}`;
       }
-      else { 
-        final_token = `$${token}`
-      }
-      console.log(final_token)
+      console.log(final_token);
       const data = await getRugCheck(final_token);
-      
+
       if (!data) {
         setMessageList((prev) => [
           ...(prev || []),
           {
             type: 'message',
-            message: 'Oops! There has been a problem while identifying the data',
+            message:
+              'Oops! There has been a problem while identifying the data',
           },
         ]);
         return responseToOpenai(
@@ -1398,8 +1383,8 @@ const Conversation = () => {
               let response = await handleSwap(quantity, tokenA, tokenB);
               sendClientEvent(response);
             } else if (output.name === 'getTokenData') {
-              const { token_address } = JSON.parse(output.arguments);
-              let response = await handleTokenData(token_address);
+              const { isBase58, tokenInput } = JSON.parse(output.arguments);
+              let response = await handleTokenData(isBase58, tokenInput);
               sendClientEvent(response);
             } else if (output.name === 'getLstData') {
               let response = await handleLSTData();
@@ -1425,10 +1410,6 @@ const Conversation = () => {
             } else if (output.name === 'getTrendingNFTs') {
               let response = await handleTrendingNFTs();
               sendClientEvent(response);
-            } else if (output.name === 'getTokenDataSymbol') {
-              const { symbol } = JSON.parse(output.arguments);
-              let response = await handleTokenDataSymbol(symbol);
-              sendClientEvent(response);
             } else if (output.name === 'swapLST') {
               const { quantity, lst } = JSON.parse(output.arguments);
               let response = await handleLstSwaps(quantity, lst);
@@ -1439,26 +1420,17 @@ const Conversation = () => {
               const { amount, token, address } = JSON.parse(output.arguments);
               let response = await transferSpl(amount, token, address);
               sendClientEvent(response);
-            } else if (output.name === 'transferSpl') {
-              const { amount, token, address } = JSON.parse(output.arguments);
-              let response = await transferSpl(amount, token, address);
-              sendClientEvent(response);
             } else if (output.name === 'fetchWallet') {
               let response = await fetchWallet();
               sendClientEvent(response);
             } else if (output.name === 'getRugCheck') {
-                const { token } = JSON.parse(output.arguments);
-                let response = await handleRugCheck(token)
-                sendClientEvent(response);
+              const { token } = JSON.parse(output.arguments);
+              let response = await handleRugCheck(token);
+              sendClientEvent(response);
+            } else if (output.name === 'getMarketData') {
+              let response = await marketMacro();
+              sendClientEvent(response);
             }
-              else if (output.name === 'getMarketData') {
-                let response = await marketMacro()
-                sendClientEvent(response);
-            }
-              else if (output.name === 'getMarketData') {
-                let response = await marketMacro()
-                sendClientEvent(response);
-              }
           }
         }
       }
@@ -1487,7 +1459,7 @@ const Conversation = () => {
         >
           {mediaRecorder && (
             <LiveAudioVisualizer
-              barColor={theme == 'light' ? "#1D1D1F" : "#D8B4FE"}
+              barColor={theme == 'light' ? '#1D1D1F' : '#D8B4FE'}
               mediaRecorder={mediaRecorder}
               width={400}
               height={200}

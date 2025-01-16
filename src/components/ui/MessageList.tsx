@@ -15,7 +15,6 @@ import {
   SanctumCard,
   NFTCollectionCard,
   MarketDataCard
-  MarketDataCard
 } from '../../types/messageCard';
 import {
   Dialog,
@@ -382,20 +381,20 @@ const MessageList: React.FC<Props> = ({ messageList }) => {
             );
             case 'marketDataCard':
             const marketDataCard = item.card as MarketDataCard;
-            let processedMarketData = cleanMarketData(marketDataCard.marketAnalysis)
+            // let processedMarketData = cleanMarketData(marketDataCard.marketAnalysis)
             
-              return (
-                <div className="grid grid-cols-3 gap-6 my-4">
-                  <div className="flex w-fit items-center gap-3 dark:text-bodydark2">
-                    { processedMarketData.map((data, index) => (
-                      <div key={index} className="flex flex-col items-center">
-                        <h3 className="text-small font-medium">{data}</h3>
-                      </div>
-                    ))}
+            //   return (
+            //     <div className="grid grid-cols-3 gap-6 my-4">
+            //       <div className="flex w-fit items-center gap-3 dark:text-bodydark2">
+            //         { processedMarketData.map((data, index) => (
+            //           <div key={index} className="flex flex-col items-center">
+            //             <h3 className="text-small font-medium">{data}</h3>
+            //           </div>
+            //         ))}
                   
-                  </div>
-                </div>
-            );
+            //       </div>
+            //     </div>
+            // );
         
           
           case 'luloCard':

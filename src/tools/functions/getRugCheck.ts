@@ -8,18 +8,15 @@ export const getRugCheck = {
   parameters: {
     type: 'object',
     strict: true,
-      properties: {
+    properties: {
       token: {
         type: 'string',
         description: 'The name or address of the token',
       },
     },
     required: ['token'],
-},
-  
+  },
 };
 
 //TODO: Shift the trigger logic here from conversation.tsx
-export function getRugCheckFunction() {
-  
-}
+export function getRugCheckFunction() {}
