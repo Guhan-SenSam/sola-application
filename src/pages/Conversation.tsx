@@ -928,7 +928,7 @@ const Conversation = () => {
     }
   };
 
-  const handleRugCheck = async (token: string) => {
+  const handleRugCheck = async (isBase58: boolean, token: string) => {
     setMessageList((prev) => [
       ...(prev || []),
       {
@@ -937,14 +937,8 @@ const Conversation = () => {
       },
     ]);
     try {
-      let final_token = '';
-      if (token.startsWith('$')) {
-        final_token = token;
-      } else {
-        final_token = `$${token}`;
-      }
-      console.log(final_token);
-      const data = await getRugCheck(final_token);
+      //TODO: support for address
+      const data = await getRugCheck(token);
 
       if (!data) {
         setMessageList((prev) => [
@@ -1416,8 +1410,8 @@ const Conversation = () => {
               let response = await fetchWallet();
               sendClientEvent(response);
             } else if (output.name === 'getRugCheck') {
-              const { token } = JSON.parse(output.arguments);
-              let response = await handleRugCheck(token);
+              const { isBase58, tokenInput } = JSON.parse(output.arguments);
+              let response = await handleRugCheck(isBase58, tokenInput);
               sendClientEvent(response);
             } else if (output.name === 'getMarketData') {
               let response = await marketMacro();
