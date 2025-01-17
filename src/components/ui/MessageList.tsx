@@ -13,6 +13,7 @@ import {
   SanctumCard,
   NFTCollectionCard,
   MarketDataCard,
+  TopHolders,
 } from '../../types/messageCard';
 import {
   Dialog,
@@ -22,7 +23,7 @@ import {
   Transition,
   TransitionChild,
 } from '@headlessui/react';
-import { BarChart, Copy, X } from 'react-feather';
+import { BarChart, Copy, ExternalLink, X } from 'react-feather';
 import useAppState from '../../store/zustand/AppState';
 import axios from 'axios';
 import { Connection, VersionedTransaction } from '@solana/web3.js';
@@ -30,6 +31,7 @@ import { tokenList } from '../../store/tokens/tokenMapping';
 import { SwapParams } from '../../types/swap';
 import { responseToOpenai } from '../../lib/utils/response';
 import { ConnectedSolanaWallet } from '@privy-io/react-auth';
+import { numberFormatter } from '../../lib/utils/formatNumber';
 
 const wallet_service_url = process.env.WALLET_SERVICE_URL;
 
@@ -334,6 +336,61 @@ const MessageList: React.FC<Props> = ({ messageList }) => {
                     )}
                   </a>
                 ))}
+              </div>
+            );
+
+          case 'topHoldersCard':
+            const topHolders = item.card as TopHolders[];
+            return (
+              <div className=" rounded-lg p-4 my-4 shadow-md bg-[#F5F5F5] h-full dark:bg-darkalign2 dark:text-bodydark2">
+                {' '}
+                <h2 className="text-lg font-semibold mb-4 text-bodydark2">
+                  Top Holders Information
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-700">
+                    {' '}
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-2 font-medium text-left uppercase tracking-wider">
+                          Owner
+                        </th>
+                        <th className="px-4 py-2 font-medium text-righ uppercase tracking-wider">
+                          Balance
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topHolders.map((holder, index) => (
+                        <tr key={index}>
+                          {' '}
+                          <td className="p-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <span className="truncate">
+                                {holder.address.slice(0, 5)}...
+                                {holder.address.slice(-5)}
+                              </span>{' '}
+                              <button
+                                onClick={() => {
+                                  window.open(
+                                    `https://solscan.io/account/${holder.address}`,
+                                    '_blank',
+                                  );
+                                }}
+                                className="mx-4 text-xs font-medium rounded-lg hover:scale-105 hover:shadow-lg transition-all"
+                              >
+                                <ExternalLink className='h-4 w-4' />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 text-center whitespace-nowrap">
+                            {numberFormatter(holder.uiAmount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             );
 

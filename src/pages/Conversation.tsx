@@ -13,6 +13,7 @@ import {
   RugCheckCard,
   MarketDataCard,
   CoinInfo,
+  TopHolders,
 } from '../types/messageCard';
 import { SwapParams } from '../types/swap';
 import { swapTx } from '../lib/solana/swapTx';
@@ -41,6 +42,7 @@ import { fetchLSTAddress } from '../lib/utils/lst_reader';
 import { transferSplTx } from '../lib/solana/transferSpl';
 import { getRugCheck } from '../lib/solana/rugCheck';
 import { getMarketData } from '../lib/utils/marketMacro';
+import { getTopHolders } from '../lib/solana/topHolders';
 //TODO: voice speed and clarity customs
 
 const Conversation = () => {
@@ -980,6 +982,58 @@ const Conversation = () => {
     }
   };
 
+  const handleTopHolders = async (token: string) => {
+    setMessageList((prev) => [
+      ...(prev || []),
+      {
+        type: 'agent',
+        message: `Fetching top holders of ${token}.`,
+      },
+    ]);
+    try {
+      const data = await getTopHolders(token);
+
+      if (!data) {
+        setMessageList((prev) => [
+          ...(prev || []),
+          {
+            type: 'message',
+            message:
+              'Oops! There has been a problem while identifying the data',
+          },
+        ]);
+        return responseToOpenai(
+          'tell the user that there has been a problem identifying the data, do not repeat the address, only repeat if its a ticker',
+        );
+      }
+
+      let topHoldersCard: TopHolders[] = data;
+
+      setMessageList((prev) => [
+        ...(prev || []),
+        {
+          type: 'topHoldersCard',
+          card: topHoldersCard,
+        },
+      ]);
+
+      return responseToOpenai(
+        'Tell user that top holders data is successfully fetched.',
+      );
+    } catch (error) {
+      setMessageList((prev) => [
+        ...(prev || []),
+        {
+          type: 'message',
+          message: 'Oops! There has been a problem while identifying the data',
+        },
+      ]);
+      return responseToOpenai(
+        'tell the user that there has been a problem while the token data. Do not repeat the token address, only repeat if its a ticker',
+      );
+    }
+  };
+
   const handleNFTPrice = async (nft: string) => {
     setMessageList((prev) => [
       ...(prev || []),
@@ -1372,6 +1426,14 @@ const Conversation = () => {
               const { isBase58, tokenInput } = JSON.parse(output.arguments);
               let response = await handleTokenData(isBase58, tokenInput);
               sendClientEvent(response);
+            } else if (output.name === 'getRugCheck') {
+              const { isBase58, tokenInput } = JSON.parse(output.arguments);
+              let response = await handleRugCheck(isBase58, tokenInput);
+              sendClientEvent(response);
+            } else if (output.name === 'getTopHolders') {
+              const { tokenInput } = JSON.parse(output.arguments);
+              let response = await handleTopHolders(tokenInput);
+              sendClientEvent(response);
             } else if (output.name === 'getLstData') {
               let response = await handleLSTData();
               sendClientEvent(response);
@@ -1408,10 +1470,6 @@ const Conversation = () => {
               sendClientEvent(response);
             } else if (output.name === 'fetchWallet') {
               let response = await fetchWallet();
-              sendClientEvent(response);
-            } else if (output.name === 'getRugCheck') {
-              const { isBase58, tokenInput } = JSON.parse(output.arguments);
-              let response = await handleRugCheck(isBase58, tokenInput);
               sendClientEvent(response);
             } else if (output.name === 'getMarketData') {
               let response = await marketMacro();

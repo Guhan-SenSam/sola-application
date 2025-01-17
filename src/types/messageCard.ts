@@ -8,6 +8,7 @@ export type MessageCard = {
     | 'nftcards'
     | 'agent'
     | 'tokenCards'
+    | 'topHoldersCard'
     | 'nftCollectionCard'
     | 'transaction'
     | 'transactions'
@@ -23,6 +24,7 @@ export type MessageCard = {
     | MultipleCards
     | NFTCard[]
     | TokenCard[]
+    | TopHolders[]
     | NFTCollectionCard
     | LuloCard
     | TransactionCard
@@ -120,6 +122,18 @@ export interface Risk {
   score: number; 
   level: 'none' | 'warn' | 'danger'; 
 }
+
+export type TopHolders = {
+  address: string;
+  amount: string;
+  decimals: number;
+  pct: number;
+  uiAmount: number;
+  uiAmountString: string;
+  owner: string;
+  insider: boolean;
+}
+
 export interface MarketDataCard {
   marketAnalysis: string[];
   coinInfo: CoinInfo[]
