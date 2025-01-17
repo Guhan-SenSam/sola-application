@@ -41,7 +41,7 @@ import { fetchLSTAddress } from '../lib/utils/lst_reader';
 import { transferSplTx } from '../lib/solana/transferSpl';
 import { getRugCheck } from '../lib/solana/rugCheck';
 import { getMarketData } from '../lib/utils/marketMacro';
-//todo voice speed and clarity customs
+//TODO: voice speed and clarity customs
 
 const Conversation = () => {
   const {
@@ -61,7 +61,6 @@ const Conversation = () => {
   const [events, setEvents] = useState<any[]>([]);
   const audioElement = useRef<HTMLAudioElement | null>(null);
   const [messageList, setMessageList] = useState<MessageCard[]>();
-  const [fetchedToken, setFetchedToken] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState<boolean>(true);
   const [localDataChannel, setLocalDataChannel] = useState(dataChannel);
 
@@ -780,7 +779,7 @@ const Conversation = () => {
     ]);
 
     if (isBase58) {
-      console.log(tokenInput)
+      console.log(tokenInput);
       try {
         const data = await getTokenData(tokenInput);
         if (!data) {
@@ -827,13 +826,6 @@ const Conversation = () => {
         );
       }
     } else {
-      if (fetchedToken == tokenInput) {
-        return responseToOpenai(
-          'I have already fetch the data. tell them to input the address of the token.Ask if the user needed anything else.',
-        );
-      } else {
-        setFetchedToken(tokenInput);
-      }
       try {
         const data = await getTokenDataSymbol(tokenInput);
         console.log(data);

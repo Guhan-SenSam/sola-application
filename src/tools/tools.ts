@@ -10,7 +10,6 @@ import { getTokenData } from './functions/getTokenData';
 import { getLstData } from './functions/getLstData';
 import { getNFTPrice } from './functions/getNFTPrice';
 import { getTrendingNFTs } from './functions/getTrendingNFTs';
-import { getTokenDataSymbol } from './functions/getTokenDataSymbol';
 import { swapLST } from './functions/swapLSTfromClick';
 import { test } from './functions/test';
 import { transferSpl } from './functions/transferSpl';
@@ -45,7 +44,6 @@ export const tools = {
       getLstData,
       getNFTPrice,
       getTrendingNFTs,
-      getTokenDataSymbol,
       swapLST,
       transferSpl,
       fetchWallet,
